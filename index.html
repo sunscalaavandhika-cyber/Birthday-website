@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>To My Moon 🌕</title>
+    
+    <!-- Libraries -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,400;1,700&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --emerald: #10b981;
+            --gold: #fbbf24;
+            --midnight: #0c0a09;
+            --lavender: #a78bfa;
+            --moon-white: #fefce8;
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: var(--midnight);
+            font-family: 'Inter', sans-serif;
+            color: white;
+            cursor: none;
+        }
+
+        /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+           LAYER 1 & 2: 2D FANTASY SKY & MOON
+           ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+        
+        .fantasy-sky {
+            position: fixed;
+            inset: 0;
+            background: radial-gradient(circle at 70% 30%, #1a2e26 0%, #0c0a09 100%);
+            z-index: -5;
+        }
+
+        .stars-container {
+            position: fixed;
+            inset: 0;
+            z-index: -4;
+            pointer-events: none;
+        }
+
+        .moon-container {
+            position: fixed;
+            top: 15%;
+            right: 15%;
+            width: 280px;
+            height: 280px;
+            z-index: -3;
+            pointer-events: none;
+            filter: drop-shadow(0 0 60px rgba(255, 255, 255, 0.2));
+        }
+
+        .moon-main {
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at 30% 30%, var(--moon-white) 0%, #d1d5db 70%, #9ca3af 100%);
+            border-radius: 50%;
+            position: relative;
+            box-shadow: inset -20px -20px 50px rgba(0,0,0,0.2);
+        }
+
+        .moon-crater {
+            position: absolute;
+            background: rgba(0,0,0,0.05);
+            border-radius: 50%;
+            box-shadow: inset 2px 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .moon-glow-aura {
+            position: absolute;
+            inset: -50px;
+            background: radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 70%);
+            border-radius: 50%;
+            animation: moonPulse 6s infinite ease-in-out;
+        }
+
+        .fog-layer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 200%;
+            height: 40%;
+            background: linear-gradient(to top, rgba(16, 185, 129, 0.08), transparent);
+            filter: blur(40px);
+            z-index: -2;
+            animation: fogMove 40s infinite linear;
+        }
+
+        @keyframes moonPulse {
+            0%, 100% { transform: scale(1); opacity: 0.5; }
+            50% { transform: scale(1.1); opacity: 0.8; }
+        }
+
+        @keyframes fogMove {
+            from { transform: translateX(0); }
+            to { transform: translateX(-50%); }
+        }
+
+        /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+           GLASS UI & UTILITIES
+           ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+
+        .glass-card {
+            background: rgba(12, 10, 9, 0.7);
+            backdrop-filter: blur(30px);
+            -webkit-backdrop-filter: blur(30px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8);
+            border-radius: 40px;
+            display: none;
+            opacity: 0;
+            transform: translateY(40px);
+        }
+
+        .active-step { display: block; }
+
+        .heading-serif {
+            font-family: 'Playfair Display', serif;
+            background: linear-gradient(to right, #fff, #f9a8d4, var(--gold));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .btn-magic {
+            background: linear-gradient(135deg, var(--emerald), var(--gold));
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 10px 20px rgba(16, 185, 129, 0.2);
+        }
+
+        .btn-magic:hover {
+            transform: translateY(-5px) scale(1.05);
+            box-shadow: 0 15px 30px rgba(16, 185, 129, 0.4);
+        }
+
+        #cursor-dot {
+            position: fixed;
+            width: 8px;
+            height: 8px;
+            background: #fff;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 10000;
+        }
+
+        #cursor-follower {
+            position: fixed;
+            width: 35px;
+            height: 35px;
+            border: 1px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 9999;
+            transition: transform 0.15s ease-out;
+        }
+
+        /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+           LOADING SCREEN
+           ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+
+        #loader {
+            position: fixed;
+            inset: 0;
+            background: var(--midnight);
+            z-index: 100000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .loader-moon {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            box-shadow: 12px 12px 0 0 var(--moon-white);
+            animation: loaderSpin 2s infinite linear;
+            margin-bottom: 2rem;
+        }
+
+        @keyframes loaderSpin { to { transform: rotate(360deg); } }
+
+    </style>
+</head>
+<body>
+
+    <!-- Loading Screen -->
+    <div id="loader">
+        <div class="loader-moon"></div>
+        <p class="heading-serif text-2xl italic tracking-widest text-white/80">Creating your magical birthday night...</p>
+    </div>
+
+    <!-- Background Layering -->
+    <div class="fantasy-sky"></div>
+    <canvas id="stars-canvas" class="stars-container"></canvas>
+    
+    <div class="moon-container">
+        <div class="moon-glow-aura"></div>
+        <div class="moon-main" id="moon">
+            <!-- Craters generated by JS -->
+        </div>
+    </div>
+
+    <div class="fog-layer"></div>
+    <canvas id="three-canvas" class="fixed inset-0 z-0"></canvas>
+
+    <!-- UI Elements -->
+    <div id="cursor-dot"></div>
+    <div id="cursor-follower"></div>
+
+    <div class="fixed top-10 left-1/2 -translate-x-1/2 w-64 h-1 bg-white/10 rounded-full overflow-hidden z-50">
+        <div id="progress-fill" class="h-full bg-gradient-to-r from-emerald-500 to-amber-400 w-1/3 transition-all duration-1000 ease-in-out"></div>
+    </div>
+
+    <!-- Main Content -->
+    <main class="relative z-10 flex items-center justify-center min-h-screen p-6">
+        
+        <!-- STEP 1: Welcome -->
+        <section id="step1" class="glass-card active-step max-w-xl w-full p-10 md:p-14 text-center">
+            <div class="text-7xl mb-8 butterfly-icon">🦋</div>
+            <h1 class="heading-serif text-5xl md:text-6xl font-bold mb-8">Hey Moon,</h1>
+            <p class="text-gray-300 text-lg leading-relaxed mb-12 font-light">
+                I made this cause you are the most special one in my life, I just want to see your smile while looking.
+            </p>
+            <button onclick="nextStep(2)" class="btn-magic px-12 py-5 rounded-full text-white font-bold tracking-widest uppercase text-xs">
+                Let’s Begin
+            </button>
+        </section>
+
+        <!-- STEP 2: Core Message -->
+        <section id="step2" class="glass-card max-w-2xl w-full p-10 md:p-14">
+            <div class="flex justify-center gap-6 text-5xl mb-8">
+                <span>🦋</span><span>🌕</span>
+            </div>
+            <h2 class="heading-serif text-4xl md:text-5xl font-bold mb-8 text-center">Happy Birthday to My Moon</h2>
+            <div class="space-y-6 text-gray-300 text-lg leading-relaxed italic font-light">
+                <p>Maahi you are my comfort zone, My home... I came to realize that I'M soo different when I'M with you...</p>
+                <p>It will always remain that I will be your Nabi and you will be My ammudu muthu via moon.</p>
+                <p>You may not believe that if I say "no matter what you will be my forever" but it's the truth (yes I like to play with the wildfire even if I burn).</p>
+            </div>
+            <div class="mt-12 text-center">
+                <button onclick="nextStep(3)" class="btn-magic px-12 py-5 rounded-full text-white font-bold tracking-widest uppercase text-xs">
+                    There’s more I want to say...
+                </button>
+            </div>
+        </section>
+
+        <!-- STEP 3: Finale -->
+        <section id="step3" class="glass-card max-w-2xl w-full p-10 md:p-14 text-center">
+            <div class="text-6xl mb-8">🧿</div>
+            <h2 class="heading-serif text-4xl font-bold mb-8">My Wish For You</h2>
+            <p class="text-gray-300 text-lg leading-relaxed mb-8 italic font-light">
+                I wish you to feel ease in your work, I wish you can do better in life, feel peace, joy, less stress, more happiness......
+            </p>
+            <p class="text-gray-300 text-lg leading-relaxed mb-12 font-light">
+                I truly wish to never fade your smile never ever....May your all dreams shine brighter than the moon itself. Also I'M truly sorry for my actions which hurts you...
+            </p>
+            
+            <div id="final-reveal" class="hidden opacity-0 scale-90 mb-10">
+                <h3 class="heading-serif text-5xl md:text-6xl font-bold mb-2">Happy Birthday, My Moon 🌕</h3>
+            </div>
+
+            <button id="celebrate-btn" onclick="triggerFinale()" class="btn-magic px-14 py-6 rounded-full text-white font-bold tracking-widest uppercase text-sm">
+                Celebrate!
+            </button>
+        </section>
+
+    </main>
+
+    <script>
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // CURSOR LOGIC
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        const dot = document.getElementById('cursor-dot');
+        const follower = document.getElementById('cursor-follower');
+        
+        document.addEventListener('mousemove', (e) => {
+            gsap.to(dot, { x: e.clientX, y: e.clientY, duration: 0 });
+            gsap.to(follower, { x: e.clientX - 17, y: e.clientY - 17, duration: 0.15 });
+        });
+
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // MOON CRATERS GENERATOR
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        const moon = document.getElementById('moon');
+        for(let i=0; i<8; i++) {
+            const crater = document.createElement('div');
+            crater.className = 'moon-crater';
+            const size = Math.random() * 40 + 20;
+            crater.style.width = size + 'px';
+            crater.style.height = size + 'px';
+            crater.style.top = Math.random() * 80 + '%';
+            crater.style.left = Math.random() * 80 + '%';
+            moon.appendChild(crater);
+        }
+
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // 2D STARS ENGINE
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        const canvasStars = document.getElementById('stars-canvas');
+        const ctxS = canvasStars.getContext('2d');
+        let stars = [];
+
+        function resizeStars() {
+            canvasStars.width = window.innerWidth;
+            canvasStars.height = window.innerHeight;
+        }
+
+        class Star {
+            constructor() {
+                this.x = Math.random() * canvasStars.width;
+                this.y = Math.random() * canvasStars.height;
+                this.size = Math.random() * 1.5;
+                this.t = Math.random() * Math.PI * 2;
+            }
+            draw() {
+                this.t += 0.02;
+                const opacity = (Math.sin(this.t) + 1) / 2;
+                ctxS.fillStyle = `rgba(255, 255, 255, ${opacity * 0.5})`;
+                ctxS.beginPath();
+                ctxS.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctxS.fill();
+            }
+        }
+
+        function initStars() {
+            stars = [];
+            for(let i=0; i<150; i++) stars.push(new Star());
+        }
+
+        function animateStars() {
+            ctxS.clearRect(0,0,canvasStars.width, canvasStars.height);
+            stars.forEach(s => s.draw());
+            
+            // Random Shooting Star
+            if(Math.random() < 0.005) createShootingStar();
+            
+            requestAnimationFrame(animateStars);
+        }
+
+        function createShootingStar() {
+            const star = document.createElement('div');
+            star.className = 'fixed bg-white rounded-full z-[-1] pointer-events-none';
+            star.style.width = '2px';
+            star.style.height = '2px';
+            star.style.left = Math.random() * 100 + 'vw';
+            star.style.top = Math.random() * 40 + 'vh';
+            star.style.boxShadow = '0 0 10px 2px white';
+            document.body.appendChild(star);
+
+            gsap.to(star, {
+                x: -400,
+                y: 400,
+                opacity: 0,
+                duration: 1,
+                ease: "power2.out",
+                onComplete: () => star.remove()
+            });
+        }
+
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // 3D BUTTERFLY SYSTEM (THREE.JS)
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        let scene, camera, renderer, butterflies = [];
+        const butterflyCount = 28;
+
+        function initThree() {
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('three-canvas'), alpha: true, antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+
+            // Butterfly Shape
+            const wingShape = new THREE.Shape();
+            wingShape.moveTo(0,0);
+            wingShape.bezierCurveTo(0.2, 0.5, 0.6, 0.5, 0.8, 0);
+            wingShape.bezierCurveTo(0.6, -0.5, 0.2, -0.5, 0, 0);
+
+            const colors = [0x10b981, 0xfbbf24, 0xf9a8d4, 0xa78bfa, 0xffffff];
+
+            for(let i=0; i < butterflyCount; i++) {
+                const group = new THREE.Group();
+                const col = colors[Math.floor(Math.random() * colors.length)];
+                
+                const wingMat = new THREE.MeshPhongMaterial({ 
+                    color: col, 
+                    side: THREE.DoubleSide, 
+                    transparent: true, 
+                    opacity: 0.7,
+                    shininess: 100
+                });
+
+                const leftWing = new THREE.Mesh(new THREE.ShapeGeometry(wingShape), wingMat);
+                const rightWing = new THREE.Mesh(new THREE.ShapeGeometry(wingShape), wingMat);
+                rightWing.rotation.y = Math.PI;
+
+                group.add(leftWing);
+                group.add(rightWing);
+
+                group.position.set(
+                    (Math.random() - 0.5) * 15,
+                    (Math.random() - 0.5) * 10,
+                    (Math.random() - 0.5) * 10
+                );
+
+                group.userData = {
+                    wingSpeed: 0.1 + Math.random() * 0.2,
+                    moveSpeed: 0.01 + Math.random() * 0.02,
+                    offset: Math.random() * 10,
+                    leftWing,
+                    rightWing
+                };
+
+                scene.add(group);
+                butterflies.push(group);
+            }
+
+            const light = new THREE.PointLight(0xffffff, 1, 100);
+            light.position.set(5, 5, 5);
+            scene.add(light);
+            scene.add(new THREE.AmbientLight(0xffffff, 0.4));
+            camera.position.z = 8;
+        }
+
+        function animateThree() {
+            requestAnimationFrame(animateThree);
+            const time = Date.now() * 0.002;
+            
+            butterflies.forEach(b => {
+                const flap = Math.sin(time * 15 * b.userData.wingSpeed) * 0.8;
+                b.userData.leftWing.rotation.y = flap;
+                b.userData.rightWing.rotation.y = Math.PI - flap;
+                
+                b.position.y += Math.sin(time + b.userData.offset) * 0.01;
+                b.position.x += Math.cos(time + b.userData.offset) * 0.005;
+                b.rotation.z = Math.sin(time * 0.5) * 0.1;
+            });
+
+            renderer.render(scene, camera);
+        }
+
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // STEP NAVIGATION
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        let currentStep = 1;
+
+        function nextStep(step) {
+            const currentEl = document.getElementById(`step${currentStep}`);
+            const nextEl = document.getElementById(`step${step}`);
+            
+            gsap.to(currentEl, { opacity: 0, y: -20, scale: 0.95, duration: 0.6, onComplete: () => {
+                currentEl.classList.remove('active-step');
+                nextEl.classList.add('active-step');
+                gsap.fromTo(nextEl, { opacity: 0, y: 30, scale: 0.95 }, { opacity: 1, y: 0, scale: 1, duration: 0.8, ease: "power2.out" });
+                
+                currentStep = step;
+                document.getElementById('progress-fill').style.width = (step / 3) * 100 + '%';
+            }});
+        }
+
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // GRAND FINALE
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        function triggerFinale() {
+            const btn = document.getElementById('celebrate-btn');
+            const reveal = document.getElementById('final-reveal');
+            
+            gsap.to(btn, { opacity: 0, scale: 0.8, duration: 0.5, onComplete: () => btn.style.display = 'none' });
+            
+            setTimeout(() => {
+                reveal.classList.remove('hidden');
+                gsap.to(reveal, { opacity: 1, scale: 1, duration: 1.2, ease: "back.out(1.7)" });
+
+                // Confetti Explosion
+                const duration = 5 * 1000;
+                const animationEnd = Date.now() + duration;
+                const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 0 };
+
+                const randomInRange = (min, max) => Math.random() * (max - min) + min;
+
+                const interval = setInterval(function() {
+                    const timeLeft = animationEnd - Date.now();
+                    if (timeLeft <= 0) return clearInterval(interval);
+
+                    const particleCount = 50 * (timeLeft / duration);
+                    confetti({ 
+                        ...defaults, 
+                        particleCount, 
+                        origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 },
+                        colors: ['#10b981', '#fbbf24', '#a78bfa'] 
+                    });
+                    confetti({ 
+                        ...defaults, 
+                        particleCount, 
+                        origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 },
+                        colors: ['#10b981', '#fbbf24', '#a78bfa'] 
+                    });
+                }, 250);
+
+                // Butterfly Swirl
+                butterflies.forEach((b, i) => {
+                    gsap.to(b.position, {
+                        x: Math.sin(i) * 5,
+                        z: Math.cos(i) * 5,
+                        y: 15,
+                        duration: 4,
+                        ease: "power2.in",
+                        delay: i * 0.05
+                    });
+                });
+
+                // Moon Boost
+                gsap.to('.moon-container', { 
+                    scale: 1.3, 
+                    filter: 'drop-shadow(0 0 100px rgba(16, 185, 129, 0.4))', 
+                    duration: 3 
+                });
+            }, 500);
+        }
+
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // STARTUP
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        window.addEventListener('load', () => {
+            resizeStars();
+            initStars();
+            animateStars();
+            initThree();
+            animateThree();
+
+            setTimeout(() => {
+                gsap.to('#loader', { opacity: 0, duration: 1.5, onComplete: () => {
+                    document.getElementById('loader').style.display = 'none';
+                    gsap.to('#step1', { opacity: 1, y: 0, scale: 1, duration: 1.5, ease: "power4.out" });
+                }});
+            }, 2000);
+        });
+
+        window.addEventListener('resize', () => {
+            resizeStars();
+            initStars();
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+    </script>
+</body>
+</html>
